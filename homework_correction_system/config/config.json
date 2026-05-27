@@ -9,7 +9,7 @@
     "image_processing": {
         "denoise_strength": 10,
         "binarize_method": "otsu",
-        "resize_width": 1200
+        "resize_width": 1190
     },
     "aliyun": {
         "access_key_id": "your-access-key-id",

@@ -1,4 +1,5 @@
 """
+分支请求测试
 摄像头采集模块
 负责调用摄像头实时采集作业图像，支持单帧抓拍和连续采集。
 """
@@ -10,6 +11,7 @@ from typing import Optional, Tuple
 
 class CameraCapture:
     """摄像头采集器"""
+
 
     def __init__(self, camera_id: int = 0):
         self.camera_id = camera_id
