@@ -12,17 +12,19 @@
         "resize_width": 1200
     },
     "aliyun": {
-        "access_key_id": "your-access-key-id",
-        "access_key_secret": "your-access-key-secret",
+        "access_key_id": "YOUR_ACCESS_KEY_ID",
+        "access_key_secret": "YOUR_ACCESS_KEY_SECRE",
         "region": "cn-hangzhou"
     },
     "llm": {
-        "api_key": "your-api-key",
-        "model": "gpt-4",
-        "api_base_url": "https://api.openai.com/v1",
+        "api_key": "YOUR_API_KEY",
+        "model": "deepseek-v4-pro",
+        "api_base_url": "https://api.deepseek.com",
         "temperature": 0.3,
         "max_tokens": 2048
     },
+    "question": "请批改以下数学作业",
+    "reference_answer": "",
     "api": {
         "host": "0.0.0.0",
         "port": 8000

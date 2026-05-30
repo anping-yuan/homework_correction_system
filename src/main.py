@@ -2,10 +2,11 @@
 主程序入口
 负责协调各模块完成作业批改的完整流程。
 """
-
+import json
 import sys
 import os
 import argparse
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -43,19 +44,42 @@ def run_camera_mode(config: dict, output_dir: str):
 
 
 def run_file_mode(config: dict, input_path: str, output_dir: str):
-    """文件输入模式"""
+    """文件输入模式: ocr识别 -> 大模型批改 -> 输出结果"""
     logger = setup_logging()
     logger.info(f"处理文件: {input_path}")
 
-    ocr = AliyunOCR(
-        access_key_id=config["aliyun"]["access_key_id"],
-        access_key_secret=config["aliyun"]["access_key_secret"],
-    )
-    grader = LLMGrader(api_key=config["llm"]["api_key"])
+    # 这里就用默认的模型, 后续可以改成自定义
+    # ocr提取图片中的信息
+    ocr = AliyunOCR()
+    # 大模型也是用默认的
+    # 批改
+    grader = LLMGrader()
+    # 渲染
     renderer = AnnotationRenderer()
 
-    logger.info("处理完成")
+    logger.info("步骤1:ocr识别")
+    # 原始字典文件
+    ocr_result = ocr.recognize_text(input_path)
+    # ocr结果的纯文本
+    text = ocr.parse_result(ocr_result)
 
+    logger.info("步骤2:大模型批改")
+    question = config.get("question", "请批改以下作业")
+    reference_answer = config.get("reference_answer", "")
+
+    grade_result = grader.grade(question = question, student_answer = text, reference_answer =reference_answer)
+
+    logger.info("步骤3:保存结果")
+    os.makedirs(output_dir, exist_ok=True)
+
+    json_path = os.path.join(output_dir, "result.json")
+    with open(json_path, "w", encoding = "utf-8") as f:
+        json.dump(grade_result, f, ensure_ascii = False, indent = 2)
+
+    logger.info(f"结果已保存至: {json_path}")
+    logger.info(f"是否正确:{grade_result.get("is_correct")}")
+    logger.info(f"得分:{grade_result.get('score')}/{grade_result.get('max_score')}")
+    logger.info(f"评语:{grade_result.get('comment')}")
 
 def run_api_mode(config: dict):
     """API服务模式"""
@@ -67,6 +91,9 @@ def run_api_mode(config: dict):
 
 def main():
     args = parse_args()
+    if not os.path.isabs(args.config):
+        project_root = Path(__file__).resolve().parent.parent
+        args.config = str(project_root / args.config)
     config = load_config(args.config)
 
     if args.mode == "camera":
