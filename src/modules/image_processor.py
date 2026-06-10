@@ -227,3 +227,59 @@ class ImageProcessor:
             image = self.resize(image, width=w, height=h)
 
         return image
+
+    @staticmethod
+    def stitch_vertical(image_paths: List[str], target_width: int = 1200) -> np.ndarray:
+        """将多张图片纵向拼接为一张长图
+
+        用于长题目分多张照片拍摄后合成完整试卷的场景。
+        所有图片会被缩放到相同宽度后上下拼接，中间加一条分割线便于
+        后续切题 API 区分不同页面。
+
+        Args:
+            image_paths: 图片文件路径列表（按从上到下的顺序）
+            target_width: 统一缩放到的目标宽度（像素），0 表示不缩放
+
+        Returns:
+            拼接后的 BGR 图像 (numpy ndarray)
+        """
+        images = []
+        for p in image_paths:
+            # 使用 np.fromfile + cv2.imdecode 代替 cv2.imread，
+            # 因为 cv2.imread 在 Windows 上无法处理中文路径
+            img_array = np.fromfile(p, dtype=np.uint8)
+            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            if img is None:
+                raise ValueError(f"无法读取图片: {p}")
+            images.append(img)
+
+        if len(images) == 1:
+            return images[0]
+
+        # 统一缩放到相同宽度
+        if target_width > 0:
+            resized = []
+            for img in images:
+                h, w = img.shape[:2]
+                if w != target_width:
+                    ratio = target_width / w
+                    img = cv2.resize(img, (target_width, int(h * ratio)))
+                resized.append(img)
+            images = resized
+
+        # 图片之间加一条白色分隔线（帮助切题 API 识别页面边界）
+        separator_height = 20
+        sep = np.ones((separator_height, target_width, 3), dtype=np.uint8) * 255
+        # 分隔线中间画一条虚线标记
+        cv2.line(sep, (50, separator_height // 2),
+                 (target_width - 50, separator_height // 2), (200, 200, 200), 1)
+
+        # 纵向拼接
+        parts = []
+        for i, img in enumerate(images):
+            parts.append(img)
+            if i < len(images) - 1:
+                parts.append(sep)
+
+        stitched = np.vstack(parts)
+        return stitched

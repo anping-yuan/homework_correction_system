@@ -1,0 +1,71 @@
+{
+    "camera": {
+        "camera_id": 0,
+        "resolution": {
+            "width": 1920,
+            "height": 1080
+        }
+    },
+    "image_processing": {
+        "denoise": true,
+        "denoise_strength": 10,
+        "deskew": true,
+        "enhance_contrast": true,
+        "contrast_clip_limit": 2.0,
+        "sharpen": false,
+        "binarize": false,
+        "binarize_method": "otsu",
+        "resize_width": 1200
+    },
+    "aliyun": {
+        "access_key_id": "YOUR_ALIYUN_ACCESS_KEY_ID",
+        "access_key_secret": "YOUR_ALIYUN_ACCESS_KEY_SECRET",
+        "region": "cn-hangzhou",
+        "connect_timeout": 15,
+        "read_timeout": 60
+    },
+    "llm": {
+        "api_key": "YOUR_DEEPSEEK_API_KEY",
+        "model": "deepseek-v4-pro",
+        "api_base_url": "https://api.deepseek.com",
+        "temperature": 0.3,
+        "max_tokens": 2048,
+        "request_timeout": 60
+    },
+    "dashscope": {
+        "api_key": "YOUR_DASHSCOPE_API_KEY",
+        "model": "qwen-vl-max",
+        "api_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "temperature": 0.2,
+        "max_tokens": 2048
+    },
+    "annotation": {
+        "font_path": null,
+        "font_size": 24,
+        "correct_color": [0, 255, 0],
+        "wrong_color": [255, 0, 0],
+        "comment_color": [0, 0, 255]
+    },
+    "grading": {
+        "question": "请批改以下数学作业",
+        "reference_answer": ""
+    },
+    "concurrency": {
+        "max_workers": 8,
+        "ocr_batch_size": 5,
+        "llm_batch_size": 3
+    },
+    "api": {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "workers": 4
+    },
+    "output": {
+        "save_annotated_image": true,
+        "save_json_result": true,
+        "output_dir": "data/output"
+    },
+    "error_notebook": {
+        "image_dir": "C:/Users/anpingyuan/Desktop/错题本图片"
+    }
+}

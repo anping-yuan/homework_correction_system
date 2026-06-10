@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作业批改系统</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #eef2ff;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --warning: #f59e0b;
+            --warning-light: #fffbeb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --transition: 0.15s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== 顶部导航 ===== */
+        .navbar {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-inner {
+            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .navbar-brand {
+            font-size: 1.1rem; font-weight: 600; color: var(--text);
+            display: flex; align-items: center; gap: 8px; letter-spacing: -0.01em;
+        }
+        .navbar-brand .brand-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+        }
+        .navbar-tabs { display: flex; gap: 0; }
+        .nav-tab {
+            padding: 16px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            color: var(--text-secondary); transition: var(--transition);
+            background: none; border: none; border-bottom: 2px solid transparent;
+            display: flex; align-items: center; gap: 6px; white-space: nowrap;
+        }
+        .nav-tab:hover { color: var(--text); background: var(--border-light); }
+        .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .nav-badge {
+            background: var(--danger); color: white; font-size: 0.68rem;
+            min-width: 18px; height: 18px; border-radius: 9px; font-weight: 600;
+            display: none; align-items: center; justify-content: center; padding: 0 5px;
+        }
+
+        /* ===== 主容器 ===== */
+        .main-container { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+        .page { display: none; animation: fadeIn 0.2s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: var(--card); border-radius: var(--radius-lg);
+            padding: 28px; margin-bottom: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .card-header {
+            font-size: 1rem; font-weight: 600; color: var(--text);
+            margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-header .icon { font-size: 1.1rem; opacity: 0.8; }
+
+        /* ===== 按钮 ===== */
+        .btn {
+            padding: 9px 18px; border: none; border-radius: var(--radius-sm); cursor: pointer;
+            font-size: 0.88rem; font-weight: 500; transition: var(--transition);
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:disabled { background: #c7d2fe; cursor: not-allowed; }
+        .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border-light); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); padding: 6px 12px; }
+        .btn-ghost:hover { background: var(--border-light); color: var(--text); }
+        .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+        .btn-xs { padding: 4px 10px; font-size: 0.78rem; }
+
+        /* ===== 状态提示 ===== */
+        .alert { padding: 12px 16px; border-radius: var(--radius-sm); margin: 12px 0; display: none; font-size: 0.88rem; }
+        .alert.show { display: block; }
+        .alert.info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .alert.success { background: var(--success-light); color: #065f46; border: 1px solid #a7f3d0; }
+        .alert.error { background: var(--danger-light); color: #991b1b; border: 1px solid #fecaca; }
+
+        .loading-spinner {
+            display: none; align-items: center; gap: 10px; padding: 16px 0;
+            color: var(--text-secondary); font-size: 0.88rem;
+        }
+        .loading-spinner.show { display: flex; }
+        .spinner {
+            width: 18px; height: 18px; border: 2px solid var(--border);
+            border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== 上传区 ===== */
+        .upload-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .upload-zone {
+            border: 2px dashed var(--border); border-radius: var(--radius);
+            padding: 44px 20px; text-align: center; cursor: pointer; transition: var(--transition);
+            background: #fafbfc;
+        }
+        .upload-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+        .upload-zone input { display: none; }
+        .upload-icon { font-size: 2.4rem; margin-bottom: 10px; opacity: 0.6; }
+        .upload-text { color: var(--text-secondary); font-size: 0.95rem; }
+        .upload-hint { color: var(--text-muted); font-size: 0.82rem; margin-top: 6px; }
+
+        /* 摄像头 */
+        .camera-container {
+            position: relative; margin: 16px 0; display: none;
+            border-radius: var(--radius); overflow: hidden; background: #0f172a;
+        }
+        .camera-container.show { display: block; }
+        .camera-container video { width: 100%; max-height: 420px; object-fit: contain; display: block; }
+        .camera-container canvas { display: none; }
+        .camera-toolbar { display: flex; gap: 10px; justify-content: center; padding: 14px; }
+
+        /* ===== 图片预览 ===== */
+        .preview-wrapper {
+            position: relative; display: inline-block; max-width: 100%;
+            border-radius: var(--radius-sm); overflow: hidden; user-select: none;
+            border: 1px solid var(--border);
+        }
+        .preview-wrapper img { display: block; max-width: 100%; height: auto; pointer-events: none; }
+        .q-box {
+            position: absolute; border: 2px solid var(--primary);
+            background: rgba(99,102,241,0.06); cursor: grab; transition: box-shadow 0.1s;
+        }
+        .q-box:hover { box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+        .q-box.active { border-color: #f43f5e; background: rgba(244,63,94,0.06); z-index: 10; }
+        .q-box .q-label {
+            position: absolute; top: -22px; left: -2px; background: var(--primary);
+            color: white; font-size: 11px; padding: 2px 10px;
+            border-radius: 4px 4px 0 0; white-space: nowrap; pointer-events: none; font-weight: 500;
+        }
+        .q-box.active .q-label { background: #f43f5e; }
+        .q-box .q-delete {
+            position: absolute; top: -9px; right: -9px; width: 18px; height: 18px;
+            background: #f43f5e; color: white; border-radius: 50%; border: 2px solid white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 11px; line-height: 1; z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .q-handle {
+            position: absolute; width: 10px; height: 10px; background: white;
+            border: 2px solid var(--primary); border-radius: 50%; z-index: 5;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .q-handle:hover { background: var(--primary); }
+        .q-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .q-handle.n  { top: -5px; left: calc(50% - 5px); cursor: n-resize; }
+        .q-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .q-handle.w  { top: calc(50% - 5px); left: -5px; cursor: w-resize; }
+        .q-handle.e  { top: calc(50% - 5px); right: -5px; cursor: e-resize; }
+        .q-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .q-handle.s  { bottom: -5px; left: calc(50% - 5px); cursor: s-resize; }
+        .q-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+        .draw-box {
+            position: absolute; border: 2px dashed var(--primary);
+            background: rgba(99,102,241,0.08); pointer-events: none;
+        }
+        .instructions {
+            background: #fefce8; border: 1px solid #fef08a;
+            border-radius: var(--radius-sm); padding: 12px 18px; margin-bottom: 18px;
+            font-size: 0.85rem; color: #854d0e;
+        }
+        .instructions ul { margin-left: 18px; margin-top: 4px; }
+        .instructions li { margin: 3px 0; }
+
+        /* ===== 结果展示 ===== */
+        .summary-bar {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;
+        }
+        @media (max-width: 640px) { .summary-bar { grid-template-columns: repeat(2, 1fr); } }
+        .summary-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .summary-card .s-value { font-size: 1.8rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+        .summary-card .s-label { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+        .results-grid {
+            display: grid; grid-template-columns: 1fr;
+            gap: 14px; max-width: 100%;
+        }
+        .result-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm);
+        }
+        .result-card .rc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .result-card .rc-title { font-weight: 600; font-size: 0.95rem; }
+        .result-badge {
+            padding: 3px 10px; border-radius: 14px; font-size: 0.78rem; font-weight: 500;
+        }
+        .badge-correct { background: var(--success-light); color: #065f46; }
+        .badge-wrong { background: var(--danger-light); color: #991b1b; }
+        .result-card .rc-score { font-size: 0.9rem; color: var(--primary); font-weight: 600; margin-bottom: 4px; }
+        .result-card .rc-meta { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+        .result-card .rc-tag {
+            font-size: 0.76rem; padding: 2px 8px; border-radius: 4px;
+            background: var(--border-light); color: var(--text-secondary);
+        }
+        .result-card .rc-text { color: var(--text-secondary); font-size: 0.85rem; margin: 8px 0; }
+        .result-card .rc-comment {
+            color: var(--text); font-size: 0.86rem; background: #f8fafc;
+            padding: 12px; border-radius: var(--radius-sm); margin-top: 10px; line-height: 1.6;
+        }
+        .annotated-image {
+            max-width: 100%; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); margin-top: 14px;
+        }
+
+        /* ===== 统计页 ===== */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 22px; text-align: center; box-shadow: var(--shadow-sm);
+        }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+        .stat-card .stat-label { color: var(--text-muted); font-size: 0.84rem; margin-top: 4px; }
+        .stat-card .stat-value.c-primary { color: var(--primary); }
+        .stat-card .stat-value.c-green { color: var(--success); }
+        .stat-card .stat-value.c-red { color: var(--danger); }
+        .stat-card .stat-value.c-amber { color: var(--warning); }
+
+        .chart-section { margin-bottom: 8px; }
+        .chart-section h3 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+        .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+        .bar-row { display: flex; align-items: center; gap: 12px; }
+        .bar-label { width: 90px; text-align: right; font-size: 0.84rem; color: var(--text-secondary); flex-shrink: 0; }
+        .bar-track { flex: 1; height: 22px; background: var(--border-light); border-radius: 11px; overflow: hidden; }
+        .bar-fill {
+            height: 100%; border-radius: 11px; transition: width 0.6s ease;
+            display: flex; align-items: center; padding-left: 10px;
+            font-size: 0.75rem; color: white; font-weight: 600; min-width: fit-content;
+        }
+        .bar-fill.c1 { background: var(--primary); }
+        .bar-fill.c2 { background: var(--success); }
+        .bar-fill.c3 { background: var(--warning); }
+        .bar-fill.c4 { background: var(--danger); }
+        .bar-fill.c5 { background: #3b82f6; }
+        .bar-count { min-width: 45px; font-size: 0.84rem; color: var(--text-secondary); flex-shrink: 0; }
+
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag-item {
+            padding: 5px 14px; border-radius: 16px; font-size: 0.84rem; font-weight: 500;
+            background: var(--border-light); color: var(--text-secondary);
+        }
+        .tag-item.hot { background: #fef3c7; color: #92400e; }
+
+        /* ===== 错题本 ===== */
+        .filter-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.86rem; outline: none; color: var(--text); background: white;
+            transition: var(--transition);
+        }
+        .filter-bar select:focus, .filter-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+
+        .error-list { display: flex; flex-direction: column; gap: 8px; }
+        .error-item {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .error-item:hover { border-color: #cbd5e1; }
+        .error-item .ei-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 20px; cursor: pointer; gap: 12px;
+        }
+        .error-item .ei-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .error-item .ei-subject {
+            padding: 3px 10px; border-radius: 5px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+            letter-spacing: 0.02em;
+        }
+        .ei-subject.math { background: #dbeafe; color: #1d4ed8; }
+        .ei-subject.chinese { background: #ffedd5; color: #c2410c; }
+        .ei-subject.english { background: #dcfce7; color: #15803d; }
+        .ei-subject.physics { background: #fce7f3; color: #be185d; }
+        .ei-subject.chemistry { background: #f3e8ff; color: #7c3aed; }
+        .ei-subject.biology { background: #d1fae5; color: #065f46; }
+        .ei-subject.default { background: #f1f5f9; color: #475569; }
+
+        .error-item .ei-title {
+            font-weight: 500; font-size: 0.9rem; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;
+        }
+        .error-item .ei-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .error-item .ei-date { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+        .error-item .ei-arrow { color: var(--text-muted); font-size: 0.7rem; transition: transform 0.25s; }
+        .error-item .ei-arrow.open { transform: rotate(180deg); }
+
+        .error-item .ei-detail { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border-light); background: #fafbfc; }
+        .error-item .ei-detail.show { display: block; }
+        .ei-detail .detail-section { margin-top: 14px; }
+        .ei-detail .detail-label {
+            font-weight: 600; font-size: 0.84rem; color: var(--text-secondary);
+            margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+        }
+        .ei-detail .detail-content {
+            background: white; padding: 16px; border-radius: var(--radius-sm);
+            font-size: 0.9rem; line-height: 2.0; color: var(--text);
+            border: 1px solid var(--border-light);
+            white-space: pre-wrap; word-break: break-word;
+            max-height: 500px; overflow-y: auto;
+        }
+        .ei-detail .detail-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center; padding: 64px 20px; color: var(--text-muted);
+        }
+        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 14px; opacity: 0.5; }
+        .empty-state .empty-text { font-size: 1rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .empty-state p { font-size: 0.88rem; }
+
+        /* ===== 分页 ===== */
+        .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
+        .pagination button {
+            padding: 7px 13px; border: 1px solid var(--border); background: white;
+            border-radius: var(--radius-sm); cursor: pointer; font-size: 0.86rem;
+            color: var(--text-secondary); transition: var(--transition);
+        }
+        .pagination button:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        .pagination button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .hidden { display: none !important; }
+
+        /* ===== 待上传图片列表 ===== */
+        .pending-list {
+            margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-light);
+        }
+        .pending-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 12px;
+        }
+        .pending-items {
+            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px;
+        }
+        .pending-item {
+            position: relative; flex-shrink: 0; width: 120px;
+            border: 2px solid var(--border); border-radius: var(--radius-sm);
+            overflow: hidden; background: white; cursor: grab; transition: var(--transition);
+        }
+        .pending-item:hover { border-color: var(--primary); }
+        .pending-item.dragging { opacity: 0.5; }
+        .pending-item img {
+            width: 100%; height: 90px; object-fit: cover; display: block;
+        }
+        .pending-item .pi-label {
+            font-size: 0.72rem; text-align: center; padding: 4px 6px;
+            color: var(--text-secondary); background: var(--bg);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .pending-item .pi-remove {
+            cursor: pointer; color: var(--danger); font-weight: bold;
+            font-size: 0.85rem; line-height: 1; padding: 0 2px;
+        }
+        .pending-item .pi-remove:hover { color: #dc2626; }
+        .pending-item .pi-badge {
+            position: absolute; top: 4px; left: 4px; background: var(--primary);
+            color: white; font-size: 0.65rem; padding: 1px 6px; border-radius: 3px;
+            font-weight: 600;
+        }
+
+        /* ===== 底部浮动条 ===== */
+        .batch-bar {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: var(--text); color: white; padding: 10px 20px;
+            border-radius: 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            z-index: 99; display: none; align-items: center; gap: 14px; font-size: 0.88rem;
+        }
+        .batch-bar.show { display: flex; }
+        .batch-bar button { padding: 5px 14px; font-size: 0.82rem; border-radius: 16px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <div class="navbar-brand">
+            <span class="brand-dot"></span>作业批改
+        </div>
+        <div class="navbar-tabs">
+            <button class="nav-tab active" data-page="page-correct" onclick="switchPage('page-correct')">✏️ 批改</button>
+            <button class="nav-tab" data-page="page-stats" onclick="switchPage('page-stats')">📊 统计</button>
+            <button class="nav-tab" data-page="page-notebook" onclick="switchPage('page-notebook')" id="tabNotebook">
+                📖 错题本 <span class="nav-badge" id="notebookBadge">0</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="main-container">
+
+<!-- ==================== 页面1：作业批改 ==================== -->
+<div class="page active" id="page-correct">
+
+    <div class="card" id="step1">
+        <div class="card-header"><span class="icon">📤</span>选择作业图片 <span style="font-weight:400;font-size:0.82rem;color:var(--text-muted);">可多次添加，确认后统一切题</span></div>
+        <div class="upload-actions">
+            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📁 选择文件</button>
+            <button class="btn btn-secondary" id="btnCamera" onclick="toggleCamera()">📷 拍照</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" hidden multiple>
+
+        <div class="camera-container" id="cameraContainer">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <canvas id="cameraCanvas"></canvas>
+            <div class="camera-toolbar">
+                <button class="btn btn-primary btn-sm" onclick="capturePhoto()">📸 拍摄并添加</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleCamera()" style="color:white;">取消</button>
+            </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone"
+             onclick="document.getElementById('fileInput').click()"
+             ondrop="handleDrop(event)" ondragover="event.preventDefault(); this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">拖拽图片到此处，或点击上方按钮</div>
+            <div class="upload-hint">支持多次添加 · 长题目可分批拍摄 · 确认后自动拼接</div>
+        </div>
+
+        <!-- 待处理图片列表 -->
+        <div class="pending-list" id="pendingList" style="display:none;">
+            <div class="pending-header">
+                <span>📋 已选图片（<span id="pendingCount">0</span> 张）</span>
+                <button class="btn btn-ghost btn-sm" onclick="clearPending()">清空</button>
+            </div>
+            <div class="pending-items" id="pendingItems"></div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button class="btn btn-primary" id="btnCut" onclick="startCut()">✅ 上传完成，开始切题</button>
+                <span style="font-size:0.82rem;color:var(--text-muted);align-self:center;">确认图片顺序正确后点击</span>
+            </div>
+        </div>
+
+        <div class="alert info" id="uploadStatus"></div>
+    </div>
+
+    <div class="card hidden" id="step2">
+        <div class="card-header"><span class="icon">✋</span>确认题目区域</div>
+        <div class="instructions">
+            🖱️ 在空白处<strong>拖动</strong>新建选区 · 拖动<strong>圆点</strong>调整大小 · 拖动<strong>框内</strong>移动位置 · 点击 <span style="color:#f43f5e;">×</span> 删除
+        </div>
+        <div style="overflow-x:auto;">
+            <div class="preview-wrapper" id="previewWrapper">
+                <img id="previewImage" src="" alt="作业图片">
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+            <button class="btn btn-primary" id="btnGrade" onclick="startGrading()">✏️ 开始批改</button>
+            <button class="btn btn-secondary" onclick="resetCorrect()">🔄 重新上传</button>
+            <button class="btn btn-secondary" onclick="clearAllBoxes()">清除选区</button>
+        </div>
+        <div class="loading-spinner" id="gradeSpinner"><div class="spinner"></div>正在批改中…</div>
+        <div class="alert error" id="gradeError"></div>
+    </div>
+
+    <div class="card hidden" id="step3">
+        <div class="card-header"><span class="icon">✅</span>批改结果</div>
+        <div class="summary-bar" id="summaryBar">
+            <div class="summary-card"><div class="s-value" id="sumTotal">0</div><div class="s-label">总题数</div></div>
+            <div class="summary-card"><div class="s-value" id="sumCorrect" style="color:var(--success)">0</div><div class="s-label">正确</div></div>
+            <div class="summary-card"><div class="s-value" id="sumScore">0/0</div><div class="s-label">得分</div></div>
+            <div class="summary-card"><div class="s-value" id="sumRate">0%</div><div class="s-label">正确率</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;" id="saveBar" class="hidden">
+            <button class="btn btn-primary btn-sm" onclick="saveToNotebook()">📖 保存到错题本</button>
+            <span style="font-size:0.82rem;color:var(--text-muted);">勾选错题后点击保存，已保存的不会重复添加</span>
+            <span class="alert success" id="saveMsg" style="margin:0;padding:6px 14px;display:none;"></span>
+        </div>
+        <div class="results-grid" id="resultsGrid"></div>
+        <div style="margin-top:24px;">
+            <h3 style="font-weight:600; font-size:0.95rem; margin-bottom:12px; color:var(--text-secondary);">📷 批注图片</h3>
+            <img class="annotated-image" id="annotatedImage" src="" alt="批注图片">
+        </div>
+        <div style="margin-top:20px;">
+            <button class="btn btn-secondary" onclick="resetCorrect()">🔄 批改下一张</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 页面2：统计分析 ==================== -->
+<div class="page" id="page-stats">
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-value c-primary" id="statTotal">-</div><div class="stat-label">总错题数</div></div>
+        <div class="stat-card"><div class="stat-value c-green" id="statReviewed">-</div><div class="stat-label">已复习</div></div>
+        <div class="stat-card"><div class="stat-value c-red" id="statUnreviewed">-</div><div class="stat-label">待复习</div></div>
+        <div class="stat-card"><div class="stat-value c-amber" id="statRate">-</div><div class="stat-label">复习率</div></div>
+    </div>
+
+    <div class="card chart-section" id="chartSubject" style="display:none;">
+        <h3>📚 学科分布</h3>
+        <div class="bar-chart" id="subjectChart"></div>
+    </div>
+    <div class="card chart-section" id="chartTopic" style="display:none;">
+        <h3>🏷️ 高频错误知识点</h3>
+        <div class="tag-cloud" id="topicCloud"></div>
+    </div>
+    <div class="card chart-section" id="chartDifficulty" style="display:none;">
+        <h3>📈 难度分布</h3>
+        <div class="bar-chart" id="difficultyChart"></div>
+    </div>
+
+    <div class="loading-spinner" id="statsSpinner"><div class="spinner"></div>加载中…</div>
+    <div class="empty-state" id="statsEmpty" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">暂无错题数据</div>
+        <p>完成批改后错题会自动记录</p>
+    </div>
+</div>
+
+<!-- ==================== 页面3：错题本 ==================== -->
+<div class="page" id="page-notebook">
+    <div class="card">
+        <div class="card-header" style="margin-bottom:14px;">
+            <span class="icon">📖</span>我的错题本
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <button class="btn btn-primary btn-sm" onclick="loadErrorList()">🔄 刷新</button>
+                <button class="btn btn-success btn-sm" onclick="markAllReviewed()">✅ 全部已复习</button>
+            </div>
+        </div>
+        <div class="filter-bar">
+            <select id="filterSubject" onchange="loadErrorList()"><option value="">全部学科</option></select>
+            <select id="filterReviewed" onchange="loadErrorList()">
+                <option value="">全部状态</option>
+                <option value="false">未复习</option>
+                <option value="true">已复习</option>
+            </select>
+            <input type="text" id="filterKeyword" placeholder="搜索题目、知识点…" onkeyup="debounceSearch()" style="flex:1;min-width:160px;">
+        </div>
+    </div>
+
+    <div class="error-list" id="errorList"></div>
+    <div class="pagination" id="errorPagination"></div>
+
+    <div class="loading-spinner" id="errorListSpinner"><div class="spinner"></div>加载中…</div>
+    <div class="empty-state" id="errorListEmpty" style="display:none;">
+        <div class="empty-icon">🎉</div>
+        <div class="empty-text">暂无错题</div>
+        <p>完成批改后错题会自动出现在这里</p>
+    </div>
+
+    <div class="batch-bar" id="batchBar">
+        <span id="batchCount">已选 0 项</span>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;" onclick="clearBatchSelection()">取消</button>
+        <button class="btn btn-danger btn-sm" onclick="batchDeleteErrors()">删除</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+// ==================== 全局状态 ====================
+let currentUploadId = null, regions = [], nextRegionId = 1, activeRegionId = null, dragState = null;
+let errorPage = 1, selectedErrors = new Set(), searchTimer = null;
+let pendingFiles = [];  // 待上传的文件列表
+let currentTaskId = null;  // 当前批改任务 ID
+let currentQuestions = [];   // 当前批改的完整题目数据
+
+// ==================== 页面切换 ====================
+function switchPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector(`[data-page="${id}"]`).classList.add('active');
+    if (id === 'page-stats') loadStats();
+    if (id === 'page-notebook') { loadErrorList(); loadSubjectFilter(); }
+}
+
+// ==================== Tab 1: 批改 ====================
+const el = (id) => document.getElementById(id);
+const uploadStatus = el('uploadStatus'), step2 = el('step2'), step3 = el('step3');
+const previewWrapper = el('previewWrapper'), previewImage = el('previewImage');
+const gradeSpinner = el('gradeSpinner'), gradeError = el('gradeError');
+
+function showAlert(el, msg, type) { el.textContent = msg; el.className = 'alert show ' + type; }
+function hideAlert(el) { el.className = 'alert'; }
+
+// ==================== 图片收集（不立即上传） ====================
+function handleDrop(e) {
+    e.preventDefault(); e.target.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) addPendingFiles(e.dataTransfer.files);
+}
+function handleFileSelect(e) { if (e.target.files.length > 0) addPendingFiles(e.target.files); }
+
+function addPendingFiles(fileList) {
+    const files = Array.from(fileList);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    if (!imageFiles.length) return showAlert(uploadStatus, '请只选择图片文件', 'error');
+    if (imageFiles.length !== files.length) showAlert(uploadStatus, '已跳过非图片文件', 'info');
+
+    pendingFiles.push(...imageFiles);
+    hideAlert(uploadStatus);
+    renderPendingList();
+    // 清空 file input 以允许重复选择同一文件
+    el('fileInput').value = '';
+}
+
+function removePendingFile(index) {
+    pendingFiles.splice(index, 1);
+    renderPendingList();
+    hideAlert(uploadStatus);
+}
+
+function clearPending() {
+    pendingFiles = [];
+    renderPendingList();
+    hideAlert(uploadStatus);
+}
+
+function renderPendingList() {
+    const container = el('pendingList');
+    const items = el('pendingItems');
+    const count = el('pendingCount');
+
+    if (!pendingFiles.length) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+    count.textContent = pendingFiles.length;
+
+    items.innerHTML = pendingFiles.map((f, i) => {
+        const url = URL.createObjectURL(f);
+        return `<div class="pending-item" draggable="true" data-index="${i}"
+                ondragstart="handlePendingDragStart(event,${i})"
+                ondragover="event.preventDefault();this.classList.add('dragging')"
+                ondragleave="this.classList.remove('dragging')"
+                ondrop="handlePendingDrop(event,${i})">
+            <span class="pi-badge">第${i+1}页</span>
+            <img src="${url}" alt="${f.name}">
+            <div class="pi-label">
+                <span title="${f.name}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${f.name.length>10?f.name.substring(0,10)+'…':f.name}</span>
+                <span class="pi-remove" onclick="event.stopPropagation();removePendingFile(${i})" title="移除">×</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ==================== 拖拽排序 ====================
+let pendingDragIdx = null;
+function handlePendingDragStart(e, idx) { pendingDragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function handlePendingDrop(e, toIdx) {
+    e.preventDefault(); e.currentTarget.classList.remove('dragging');
+    if (pendingDragIdx === null || pendingDragIdx === toIdx) return;
+    const [item] = pendingFiles.splice(pendingDragIdx, 1);
+    pendingFiles.splice(toIdx, 0, item);
+    pendingDragIdx = null;
+    renderPendingList();
+}
+
+// ==================== 确认后统一切题 ====================
+async function startCut() {
+    if (!pendingFiles.length) return showAlert(uploadStatus, '请先添加图片', 'error');
+
+    const count = pendingFiles.length;
+    showAlert(uploadStatus, `正在上传 ${count} 张图片并切题…`, 'info');
+    el('btnCut').disabled = true;
+
+    const fd = new FormData();
+    pendingFiles.forEach(f => fd.append('files', f));
+
+    try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        el('btnCut').disabled = false;
+
+        if (!res.ok) return showAlert(uploadStatus, '切题失败: ' + (data.error || '未知错误'), 'error');
+
+        currentUploadId = data.upload_id; regions = []; nextRegionId = 1;
+        data.questions.forEach((q, i) => {
+            regions.push({ id: nextRegionId++, question_no: q.question_no || (i + 1),
+                x: q.x, y: q.y, width: Math.max(q.width, 20), height: Math.max(q.height, 20) });
+        });
+
+        showAlert(uploadStatus, data.message, 'success');
+        showPreview(data.image_url);
+        step2.classList.remove('hidden'); step3.classList.add('hidden');
+        step2.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+        el('btnCut').disabled = false;
+        showAlert(uploadStatus, '切题失败: ' + err.message, 'error');
+    }
+}
+
+// ==================== 摄像头 ====================
+let stream = null;
+async function toggleCamera() {
+    const container = el('cameraContainer'), video = el('cameraVideo');
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; container.classList.remove('show'); el('btnCamera').textContent = '📷 拍照'; return; }
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } });
+        video.srcObject = stream; container.classList.add('show'); el('btnCamera').textContent = '📷 关闭';
+    } catch (err) { alert('无法访问摄像头: ' + err.message); }
+}
+function capturePhoto() {
+    const video = el('cameraVideo'), canvas = el('cameraCanvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(b => {
+        addPendingFiles([new File([b], 'camera_' + Date.now() + '.jpg', { type: 'image/jpeg' })]);
+        toggleCamera();
+    }, 'image/jpeg', 0.92);
+}
+
+// ==================== 选区渲染 ====================
+function showPreview(url) { previewImage.src = url; previewImage.onload = () => renderBoxes(); }
+function getScale() {
+    const r = previewImage.getBoundingClientRect();
+    return { x: previewImage.naturalWidth / r.width, y: previewImage.naturalHeight / r.height };
+}
+function renderBoxes() {
+    document.querySelectorAll('.q-box, .draw-box').forEach(e => e.remove());
+    regions.forEach(r => {
+        const s = getScale(), b = document.createElement('div');
+        b.className = 'q-box' + (r.id === activeRegionId ? ' active' : '');
+        b.dataset.id = r.id;
+        b.style.cssText = `left:${r.x/s.x}px;top:${r.y/s.y}px;width:${r.width/s.x}px;height:${r.height/s.y}px`;
+        const l = document.createElement('span'); l.className = 'q-label'; l.textContent = '第' + r.question_no + '题'; b.appendChild(l);
+        const d = document.createElement('span'); d.className = 'q-delete'; d.textContent = '×';
+        d.onclick = (e) => { e.stopPropagation(); deleteRegion(r.id); }; b.appendChild(d);
+        ['nw','n','ne','w','e','sw','s','se'].forEach(h => { const hd = document.createElement('div'); hd.className = 'q-handle '+h; hd.dataset.handle = h; b.appendChild(hd); });
+        previewWrapper.appendChild(b);
+    });
+}
+function deleteRegion(id) { regions = regions.filter(r => r.id !== id); if (activeRegionId === id) activeRegionId = null; regions.forEach((r, i) => r.question_no = i + 1); renderBoxes(); }
+function clearAllBoxes() { regions = []; nextRegionId = 1; activeRegionId = null; renderBoxes(); }
+
+// ==================== 鼠标交互 ====================
+previewWrapper.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const t = e.target, wr = previewWrapper.getBoundingClientRect(), mx = e.clientX - wr.left, my = e.clientY - wr.top;
+    if (t.classList.contains('q-handle')) {
+        const be = t.closest('.q-box'), rid = parseInt(be.dataset.id), r = regions.find(x => x.id === rid);
+        activeRegionId = rid; renderBoxes();
+        dragState = { type: 'resize', regionId: rid, handle: t.dataset.handle, startX: mx, startY: my, origX: r.x, origY: r.y, origW: r.width, origH: r.height };
+        e.preventDefault(); return;
+    }
+    const boxEl = t.classList.contains('q-box') ? t : t.closest('.q-box');
+    if (boxEl) {
+        const rid = parseInt(boxEl.dataset.id), r = regions.find(x => x.id === rid);
+        activeRegionId = rid; renderBoxes();
+        dragState = { type: 'move', regionId: rid, startX: mx, startY: my, origX: r.x, origY: r.y };
+        e.preventDefault(); return;
+    }
+    activeRegionId = null; renderBoxes();
+    dragState = { type: 'draw', startX: mx, startY: my };
+    const db = document.createElement('div'); db.className = 'draw-box'; db.id = 'tempDrawBox';
+    db.style.cssText = `left:${mx}px;top:${my}px;width:0;height:0`; previewWrapper.appendChild(db);
+    e.preventDefault();
+});
+
+document.addEventListener('mousemove', e => {
+    if (!dragState) return;
+    const wr = previewWrapper.getBoundingClientRect(), mx = e.clientX - wr.left, my = e.clientY - wr.top, sc = getScale();
+    if (dragState.type === 'draw') {
+        const db = document.getElementById('tempDrawBox'); if (!db) return;
+        db.style.left = Math.min(dragState.startX, mx) + 'px';
+        db.style.top = Math.min(dragState.startY, my) + 'px';
+        db.style.width = Math.abs(mx - dragState.startX) + 'px';
+        db.style.height = Math.abs(my - dragState.startY) + 'px';
+        return;
+    }
+    const r = regions.find(x => x.id === dragState.regionId); if (!r) return;
+    const dx = (mx - dragState.startX) * sc.x, dy = (my - dragState.startY) * sc.y;
+    const iw = previewImage.naturalWidth, ih = previewImage.naturalHeight;
+    if (dragState.type === 'move') {
+        r.x = Math.round(Math.max(0, Math.min(dragState.origX + dx, iw - r.width)));
+        r.y = Math.round(Math.max(0, Math.min(dragState.origY + dy, ih - r.height)));
+    } else {
+        let { origX, origY, origW, origH } = dragState;
+        switch(dragState.handle) {
+            case 'se': r.width = Math.round(Math.min(iw - origX, Math.max(20, origW + dx))); r.height = Math.round(Math.min(ih - origY, Math.max(20, origH + dy))); break;
+            case 'sw': r.x = Math.round(Math.max(0, Math.min(origX + origW - 20, origX + dx))); r.width = Math.round(Math.min(origX + origW, Math.max(20, origW - dx))); r.height = Math.round(Math.min(ih - origY, Math.max(20, origH + dy))); break;
+            case 'ne': r.y = Math.round(Math.max(0, Math.min(origY + origH - 20, origY + dy))); r.width = Math.round(Math.min(iw - origX, Math.max(20, origW + dx))); r.height = Math.round(Math.min(origY + origH, Math.max(20, origH - dy))); break;
+            case 'nw': r.x = Math.round(Math.max(0, Math.min(origX + origW - 20, origX + dx))); r.y = Math.round(Math.max(0, Math.min(origY + origH - 20, origY + dy))); r.width = Math.round(Math.min(origX + origW, Math.max(20, origW - dx))); r.height = Math.round(Math.min(origY + origH, Math.max(20, origH - dy))); break;
+            case 'n': r.y = Math.round(Math.max(0, Math.min(origY + origH - 20, origY + dy))); r.height = Math.round(Math.min(origY + origH, Math.max(20, origH - dy))); break;
+            case 's': r.height = Math.round(Math.min(ih - origY, Math.max(20, origH + dy))); break;
+            case 'w': r.x = Math.round(Math.max(0, Math.min(origX + origW - 20, origX + dx))); r.width = Math.round(Math.min(origX + origW, Math.max(20, origW - dx))); break;
+            case 'e': r.width = Math.round(Math.min(iw - origX, Math.max(20, origW + dx))); break;
+        }
+    }
+    renderBoxes();
+});
+
+document.addEventListener('mouseup', () => {
+    if (!dragState) return;
+    if (dragState.type === 'draw') {
+        const db = document.getElementById('tempDrawBox');
+        if (db) {
+            const w = parseFloat(db.style.width), h = parseFloat(db.style.height);
+            if (w >= 20 && h >= 20) {
+                const sc = getScale();
+                regions.push({ id: nextRegionId++, question_no: regions.length + 1,
+                    x: Math.round(parseFloat(db.style.left) * sc.x), y: Math.round(parseFloat(db.style.top) * sc.y),
+                    width: Math.round(w * sc.x), height: Math.round(h * sc.y) });
+            }
+            db.remove();
+        }
+    }
+    dragState = null; renderBoxes();
+});
+previewWrapper.addEventListener('click', e => { if (e.target === previewWrapper || e.target === previewImage) { activeRegionId = null; renderBoxes(); } });
+window.addEventListener('resize', () => { if (regions.length) renderBoxes(); });
+
+// ==================== 批改 ====================
+async function startGrading() {
+    if (!currentUploadId) return alert('请先上传图片');
+    // regions 为空时也允许提交 → 后端会自动把整张图作为一道题处理
+    gradeSpinner.classList.add('show'); hideAlert(gradeError); el('btnGrade').disabled = true;
+    try {
+        const res = await fetch('/grade-selected', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ upload_id: currentUploadId, questions: regions.map(r => ({ question_no: r.question_no, x: r.x, y: r.y, width: r.width, height: r.height, text: '' })) }),
+        });
+        const data = await res.json();
+        gradeSpinner.classList.remove('show'); el('btnGrade').disabled = false;
+        if (!res.ok) return showAlert(gradeError, '批改失败: ' + (data.error || '未知错误'), 'error');
+        showResults(data); step3.classList.remove('hidden'); step3.scrollIntoView({ behavior: 'smooth' });
+        updateBadge();
+    } catch (err) { gradeSpinner.classList.remove('show'); el('btnGrade').disabled = false; showAlert(gradeError, '批改失败: ' + err.message, 'error'); }
+}
+
+function showResults(d) {
+    currentTaskId = d.task_id;
+    currentQuestions = d.questions || [];
+    el('saveBar').classList.remove('hidden');
+    el('saveMsg').style.display = 'none';
+    el('sumTotal').textContent = d.questions_count;
+    el('sumCorrect').textContent = d.correct_count;
+    el('sumScore').textContent = d.total_score + '/' + d.total_max;
+    el('sumRate').textContent = (d.total_max > 0 ? Math.round(d.total_score / d.total_max * 100) : 0) + '%';
+    const grid = el('resultsGrid'); grid.innerHTML = '';
+    d.questions.forEach(q => {
+        const c = document.createElement('div');
+        c.className = 'result-card';
+        const subQs = q.sub_questions || [];
+
+        // 小题列表（始终显示，即使只有1个）
+        let subHtml = '';
+        const hasSubs = subQs.length > 0;
+        if (hasSubs) {
+            subHtml = '<div style="margin:12px 0;border-top:2px solid var(--primary-light);padding-top:10px;">' +
+                '<div style="font-weight:600;font-size:0.88rem;color:var(--primary);margin-bottom:8px;">📋 小题详情（共' + subQs.length + '题）</div>' +
+                subQs.map(sq => {
+                    const bg = sq.is_correct ? '#f0fdf4' : '#fef2f2';
+                    const bd = sq.is_correct ? '#bbf7d0' : '#fecaca';
+                    const icon = sq.is_correct ? '✓' : '✗';
+                    const cls = sq.is_correct ? 'badge-correct' : 'badge-wrong';
+                    return '<div style="background:' + bg + ';border:1px solid ' + bd + ';border-radius:8px;padding:10px 14px;margin-bottom:6px;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
+                            '<span style="font-weight:700;font-size:0.9rem;min-width:36px;">' + esc(sq.label||'') + '</span>' +
+                            '<span class="result-badge ' + cls + '" style="padding:2px 8px;border-radius:10px;font-size:0.76rem;">' + icon + ' ' + (sq.is_correct?'正确':'错误') + '</span>' +
+                            '<span style="font-size:0.84rem;color:var(--primary);font-weight:600;">' + sq.score + '/' + sq.max_score + '分</span>' +
+                        '</div>' +
+                        '<div style="font-size:0.84rem;color:var(--text);line-height:1.7;">' + esc(sq.comment||'') + '</div>' +
+                    '</div>';
+                }).join('') +
+                '</div>';
+        }
+
+        const answerHint = q.student_answer_found === false
+            ? '<div style="color:#f59e0b;font-size:0.8rem;margin:4px 0;">⚠ 未检测到学生作答痕迹</div>'
+            : '';
+
+        // 错题本复选框：整道大题一个开关，错误默认勾选
+        c.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<span style="font-weight:600;font-size:1rem;">📝 批改结果</span>' +
+                '<span class="result-badge ' + (q.is_correct ? 'badge-correct' : 'badge-wrong') + '">' + (q.is_correct ? '✓ 全部正确' : '✗ 存在错误') + '</span>' +
+            '</div>' +
+            '<label style="font-size:0.82rem;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px;">' +
+                '<input type="checkbox" id="save_cb" ' + (q.is_correct ? '' : 'checked') + ' style="accent-color:var(--primary);"> 📖 加入错题本' +
+            '</label>' +
+            '</div>' +
+            '<div class="rc-score" style="margin-bottom:6px;">总分：' + q.score + ' / ' + q.max_score + '</div>' +
+            (q.subject ? '<div class="rc-meta" style="margin-bottom:8px;"><span class="rc-tag">📚 ' + esc(q.subject) + '</span><span class="rc-tag">📌 ' + esc(q.topic||'未分类') + '</span><span class="rc-tag">📐 ' + esc(q.difficulty||'中等') + '</span></div>' : '') +
+            answerHint +
+            subHtml +
+            (q.comment && !hasSubs ? '<div class="rc-comment" style="margin-top:8px;">💬 ' + esc(q.comment||'') + '</div>' : '');
+        grid.appendChild(c);
+    });
+    if (d.annotated_image_url) el('annotatedImage').src = d.annotated_image_url;
+}
+
+function resetCorrect() {
+    currentUploadId = null; currentTaskId = null; currentQuestions = [];
+    regions = []; nextRegionId = 1; activeRegionId = null;
+    el('fileInput').value = ''; previewImage.src = '';
+    [step2, step3].forEach(s => s.classList.add('hidden'));
+    el('saveBar').classList.add('hidden'); el('saveMsg').style.display = 'none';
+    hideAlert(uploadStatus); hideAlert(gradeError); gradeSpinner.classList.remove('show'); el('btnGrade').disabled = false;
+    document.querySelectorAll('.q-box,.draw-box').forEach(e => e.remove());
+    el('btnCut').disabled = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== 保存错题本 ====================
+async function saveToNotebook() {
+    if (!currentTaskId || !currentQuestions.length) return;
+    const cb = document.querySelector('#resultsGrid input[id="save_cb"]');
+    const q = currentQuestions[0];
+    if (!q) return;
+
+    const question = {
+        question_no: q.question_no,
+        save: cb ? cb.checked : !q.is_correct,
+        is_correct: q.is_correct,
+        comment: q.comment || '',
+        ocr_text: q.ocr_text || q.comment || '',
+        subject: q.subject || '未分类',
+        topic: q.topic || '未分类',
+        difficulty: q.difficulty || '中等',
+        score: q.score || 0,
+        max_score: q.max_score || 0,
+        image_url: q.image_url || '',
+        sub_questions: q.sub_questions || [],
+    };
+    if (!question.save) return alert('请勾选"加入错题本"后再保存');
+
+    try {
+        const res = await fetch('/api/error-notebook/save-batch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({task_id: currentTaskId, questions: [question]}),
+        });
+        const data = await res.json();
+        const msg = el('saveMsg');
+        msg.style.display = 'inline-block';
+        msg.textContent = data.message || '保存成功';
+        setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        updateBadge();
+    } catch(err) {
+        alert('保存失败: ' + err.message);
+    }
+}
+
+// ==================== Tab 2: 统计 ====================
+async function loadStats() {
+    const sp = el('statsSpinner'), em = el('statsEmpty'); sp.classList.add('show'); em.style.display = 'none';
+    try {
+        const s = await (await fetch('/api/stats')).json(); sp.classList.remove('show');
+        if (!s.total) { em.style.display = 'block'; return; }
+        el('statTotal').textContent = s.total; el('statReviewed').textContent = s.reviewed;
+        el('statUnreviewed').textContent = s.unreviewed; el('statRate').textContent = s.review_rate + '%';
+        renderBars('subjectChart', s.by_subject, 'total', ['c1','c2','c3','c4','c5']);
+        renderCloud('topicCloud', s.by_topic);
+        renderBars('difficultyChart', s.by_difficulty, null, { '简单': 'c2', '中等': 'c3', '困难': 'c4' });
+        ['chartSubject','chartTopic','chartDifficulty'].forEach(id => el(id).style.display = '');
+    } catch (err) { sp.classList.remove('show'); }
+}
+function renderBars(id, data, key, colors) {
+    const entries = Object.entries(data||{}); if (!entries.length) { el(id).parentElement.style.display = 'none'; return; }
+    const max = Math.max(...entries.map(([,v]) => key ? v[key] : v), 1);
+    el(id).innerHTML = entries.map(([k, v], i) => {
+        const val = key ? v[key] : v;
+        const c = typeof colors === 'object' && !Array.isArray(colors) ? (colors[k] || 'c1') : (Array.isArray(colors) ? colors[i%colors.length] : 'c1');
+        return `<div class="bar-row"><span class="bar-label">${esc(k)}</span><div class="bar-track"><div class="bar-fill ${c}" style="width:${Math.max(val/max*100,2)}%">${v.reviewed ? '✓'+v.reviewed : ''}</div></div><span class="bar-count">${val} 题</span></div>`;
+    }).join('');
+}
+function renderCloud(id, data) {
+    const entries = Object.entries(data||{}); if (!entries.length) { el(id).parentElement.style.display = 'none'; return; }
+    el(id).innerHTML = entries.map(([k, v]) => `<span class="tag-item ${v>=5?'hot':''}">${esc(k)} (${v})</span>`).join('');
+}
+
+// ==================== Tab 3: 错题本 ====================
+async function loadSubjectFilter() {
+    const data = await (await fetch('/api/subjects')).json();
+    const sel = el('filterSubject'); sel.innerHTML = '<option value="">全部学科</option>';
+    data.subjects.forEach(s => { sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`; });
+}
+async function loadErrorList(p = 1) {
+    errorPage = p; const sp = el('errorListSpinner'), em = el('errorListEmpty'), list = el('errorList'), pag = el('errorPagination');
+    sp.classList.add('show'); em.style.display = 'none'; list.innerHTML = ''; pag.innerHTML = '';
+    const params = new URLSearchParams({ page: p, page_size: '20' });
+    const subj = el('filterSubject').value, rev = el('filterReviewed').value, kw = el('filterKeyword').value;
+    if (subj) params.set('subject', subj); if (rev) params.set('reviewed', rev); if (kw) params.set('keyword', kw);
+    try {
+        const data = await (await fetch('/api/error-notebook?' + params)).json();
+        sp.classList.remove('show'); if (!data.entries.length) { em.style.display = 'block'; updateBadge(); return; }
+        data.entries.forEach(e => {
+            const scMap = { '数学':'math','语文':'chinese','英语':'english','物理':'physics','化学':'chemistry','生物':'biology','历史':'history','地理':'geography','政治':'politics' };
+            const sc = scMap[e.subject] || 'default';
+            const item = document.createElement('div'); item.className = 'error-item'; item.dataset.id = e.id;
+            item.innerHTML = `<div class="ei-header" onclick="toggleDetail(this,'${e.id}')">
+                <div class="ei-left"><span class="ei-subject ${sc}">${esc(e.subject)}</span><span class="ei-title">${esc((e.question_text||'无').substring(0,55))}</span></div>
+                <div class="ei-right"><span class="ei-date">${fmt(e.created_at)}</span><span class="ei-arrow">▾</span></div>
+            </div>
+            <div class="ei-detail" id="detail-${e.id}">
+                <div class="detail-section"><div class="detail-label">📝 题目内容</div><div class="detail-content">${esc(e.question_text||'无')}</div></div>
+                ${e.image_url ? `<div class="detail-section"><div class="detail-label">🖼️ 原题图片</div><img src="${e.image_url}" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)" onerror="this.style.display='none'" loading="lazy"></div>` : ''}
+                <div class="detail-section"><div class="detail-label">💡 解析</div><div class="detail-content" id="expl-${e.id}">${esc(e.comment||'暂无')}</div></div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:0.82rem;color:var(--text-muted);">
+                    <span>📚 ${esc(e.subject)}</span><span>📌 ${esc(e.topic)}</span><span>📐 ${esc(e.difficulty)}</span><span>📅 ${fmt(e.created_at)}</span>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn btn-sm ${e.is_reviewed?'btn-secondary':'btn-success'}" onclick="toggleReview('${e.id}')">${e.is_reviewed?'↩ 未复习':'✅ 已复习'}</button>
+                    <button class="btn btn-sm btn-secondary" onclick="renameError('${e.id}')">✏️ 重命名</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteError('${e.id}')">🗑️ 删除</button>
+                </div>
+            </div>`;
+            list.appendChild(item);
+        });
+        if (data.total_pages > 1) {
+            let h = `<button ${data.page<=1?'disabled':''} onclick="loadErrorList(${data.page-1})">‹</button>`;
+            for (let i = 1; i <= Math.min(data.total_pages, 8); i++) h += `<button class="${i===data.page?'active':''}" onclick="loadErrorList(${i})">${i}</button>`;
+            h += `<button ${data.page>=data.total_pages?'disabled':''} onclick="loadErrorList(${data.page+1})">›</button>`;
+            pag.innerHTML = h;
+        }
+        updateBadge();
+    } catch (err) { sp.classList.remove('show'); }
+}
+
+function toggleDetail(hdr, id) {
+    const det = el('detail-' + id), arr = hdr.querySelector('.ei-arrow');
+    det.classList.toggle('show'); arr.classList.toggle('open', det.classList.contains('show'));
+}
+async function toggleReview(id) { await fetch(`/api/error-notebook/${id}/${el('detail-'+id)?.querySelector('.btn-success')?'review':'unreview'}`, { method:'PATCH' }); loadErrorList(errorPage); }
+async function renameError(id) {
+    const newName = prompt('请输入新的题目名称（用于错题本中显示）：');
+    if (!newName || !newName.trim()) return;
+    try {
+        const res = await fetch(`/api/error-notebook/${id}/rename`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question_text: newName.trim()}),
+        });
+        const data = await res.json();
+        if (res.ok) loadErrorList(errorPage);
+        else alert(data.error || '重命名失败');
+    } catch(err) { alert('重命名失败: ' + err.message); }
+}
+async function deleteError(id) { if (confirm('确定删除？')) { await fetch('/api/error-notebook/'+id, { method:'DELETE' }); loadErrorList(errorPage); } }
+async function markAllReviewed() { if (confirm('确定全部标为已复习？')) { await fetch('/api/error-notebook/mark-all-reviewed', { method:'PATCH' }); loadErrorList(1); loadStats(); } }
+async function batchDeleteErrors() {
+    if (!selectedErrors.size) return alert('请先选择错题');
+    if (!confirm(`删除 ${selectedErrors.size} 道错题？`)) return;
+    await fetch('/api/error-notebook/batch-delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ids:Array.from(selectedErrors)}) });
+    selectedErrors.clear(); updateBatchBar(); loadErrorList(1);
+}
+function clearBatchSelection() { selectedErrors.clear(); updateBatchBar(); }
+function updateBatchBar() { const b = el('batchBar'), c = el('batchCount'); if (selectedErrors.size) { b.classList.add('show'); c.textContent = `已选 ${selectedErrors.size} 项`; } else b.classList.remove('show'); }
+
+async function updateBadge() {
+    try {
+        const s = await (await fetch('/api/stats')).json();
+        const badge = el('notebookBadge');
+        if (s.unreviewed > 0) { badge.style.display = 'flex'; badge.textContent = s.unreviewed; }
+        else badge.style.display = 'none';
+    } catch(e) {}
+}
+function debounceSearch() { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadErrorList(1), 350); }
+
+// ==================== 工具 ====================
+function esc(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = String(t); return d.innerHTML; }
+function fmt(s) { if (!s) return ''; const d = new Date(s), p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+
+updateBadge();
+</script>
+</body>
+</html>

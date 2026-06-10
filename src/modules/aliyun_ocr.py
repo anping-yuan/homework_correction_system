@@ -69,10 +69,16 @@ class AliyunOCR:
         if not self.access_key_id or not self.access_key_secret:
             raise ValueError("没有找到阿里云AccessKey,请配置.")
 
+        # 读取超时配置
+        connect_timeout = aliyun_config.get("connect_timeout", 10)
+        read_timeout = aliyun_config.get("read_timeout", 30)
+
         # 组装配置包
         sdk_config = open_api_models.Config(
             access_key_id = self.access_key_id,
             access_key_secret = self.access_key_secret,
+            connect_timeout = connect_timeout * 1000,
+            read_timeout = read_timeout * 1000,
         )
         # 存储连接得服务器
         sdk_config.endpoint = f"ocr-api.{self.region}.aliyuncs.com"
@@ -108,13 +114,96 @@ class AliyunOCR:
         logger.info("通用文字识别完成")
         return result
 
+    def recognize_edu_paper_cut(self, image_path: str) -> Dict:
+        """试卷切题：将整张试卷切分为单道题目区域"""
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        request = ocr_models.RecognizeEduPaperCutRequest()
+        request.body = image_bytes
+        request.cut_type = "question"
+        request.image_type = "scan"
+
+        response = self.client.recognize_edu_paper_cut(request)
+        result = response.body.to_map()
+
+        logger.info("试卷切题完成")
+        return result
+
+    def get_question_regions(self, paper_cut_result: Dict) -> List[Dict]:
+        """从切题结果中提取每道题的区域坐标和题号"""
+        data_str = paper_cut_result.get("Data", "{}")
+        data = json.loads(data_str)
+
+        regions = []
+        for page in data.get("page_list", []):
+            for subject in page.get("subject_list", []):
+                ids = subject.get("ids", [])
+                question_no = ids[0] if ids else 0
+                content_infos = subject.get("content_list_info", [])
+                if content_infos:
+                    pos = content_infos[0].get("pos", [])
+                    if pos:
+                        x1 = pos[0].get("x", 0)
+                        y1 = pos[0].get("y", 0)
+                        x2 = pos[2].get("x", 0)
+                        y2 = pos[2].get("y", 0)
+                    else:
+                        x1 = y1 = x2 = y2 = 0
+                else:
+                    x1 = y1 = x2 = y2 = 0
+
+                regions.append({
+                    "question_no": question_no,
+                    "text": subject.get("text", ""),
+                    "x": x1,
+                    "y": y1,
+                    "width": x2 - x1,
+                    "height": y2 - y1,
+                })
+        return regions
+
+    def recognize_edu_question_ocr(self, image_path: str) -> Dict:
+        """题目识别：对单道题目进行精细OCR"""
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        request = ocr_models.RecognizeEduQuestionOcrRequest()
+        request.body = image_bytes
+
+        response = self.client.recognize_edu_question_ocr(request)
+        result = response.body.to_map()
+
+        logger.info("题目识别完成")
+        return result
+
     def recognize_handwriting(self, image_path: str) -> Dict:
         """识别手写文字"""
-        pass
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        request = ocr_models.RecognizeHandwritingRequest()
+        request.body = image_bytes
+
+        response = self.client.recognize_handwriting(request)
+        result = response.body.to_map()
+
+        logger.info("手写文字识别完成")
+        return result
 
     def recognize_formula(self, image_path: str) -> Dict:
         """识别公式内容"""
-        pass
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        request = ocr_models.RecognizeFormulaRequest()
+        request.body = image_bytes
+
+        response = self.client.recognize_formula(request)
+        result = response.body.to_map()
+
+        logger.info("公式识别完成")
+        return result
 
     def get_text_regions(self, ocr_result: Dict) -> List[Dict]:
         """从OCR结果中提取文字区域信息
