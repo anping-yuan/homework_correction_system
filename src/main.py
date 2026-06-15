@@ -77,8 +77,7 @@ def process_single_image(
         regions = ocr.get_text_regions(ocr_result)
         grading = config.get("grading", {})
         grade_result = grader.grade(
-            question=grading.get("question", "请批改以下作业"),
-            student_answer=text,
+            ocr_text=text,
             reference_answer=grading.get("reference_answer", ""),
         )
         questions_results = [{
@@ -108,8 +107,7 @@ def process_single_image(
 
             q_text = q.get("text", "")
             grade_result = grader.grade(
-                question=q_text,
-                student_answer=q_text,
+                ocr_text=q_text,
                 reference_answer=total_grading.get("reference_answer", ""),
             )
 

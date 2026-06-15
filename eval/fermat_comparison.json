@@ -1,0 +1,41 @@
+{
+  "sample_count": 100,
+  "modes": {
+    "vision": {
+      "metrics": {
+        "accuracy": 69.0,
+        "total_valid": 100,
+        "false_positives": 4,
+        "false_negatives": 27,
+        "recall_has_error": 71.3,
+        "precision_has_error": 87.7,
+        "avg_time_sec": 18.1
+      },
+      "error_samples": []
+    },
+    "ocr_llm": {
+      "metrics": {
+        "accuracy": 56.0,
+        "total_valid": 100,
+        "false_positives": 7,
+        "false_negatives": 37,
+        "recall_has_error": 61.3,
+        "precision_has_error": 79.0,
+        "avg_time_sec": 25.6
+      },
+      "error_samples": []
+    },
+    "vision_deepseek": {
+      "metrics": {
+        "accuracy": 58.0,
+        "total_valid": 100,
+        "false_positives": 5,
+        "false_negatives": 37,
+        "recall_has_error": 57.5,
+        "precision_has_error": 92.0,
+        "avg_time_sec": 29.5
+      },
+      "error_samples": []
+    }
+  }
+}
